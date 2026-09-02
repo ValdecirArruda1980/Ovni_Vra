@@ -139,6 +139,17 @@
             return countryFallback || "Área Oceânica / Não Mapeada";
         }
 
+        function calcularDistanciaKm(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Raio da Terra em km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return Math.round(R * c);
+        }
+
         async function carregarCidadesVoo(item, prefix) {
             const startPoint = item.trajectory && item.trajectory.length > 0 ? item.trajectory[0] : [item.latitude, item.longitude];
             const currPoint = [item.latitude, item.longitude];
@@ -148,13 +159,18 @@
                 obterNomeCidade(currPoint[0], currPoint[1], item.country)
             ]);
 
+            const distanciaKm = calcularDistanciaKm(startPoint[0], startPoint[1], currPoint[0], currPoint[1]);
+
             const elStart = document.getElementById(`${prefix}-start`);
             if (elStart) elStart.innerText = cidadeInicio;
 
             const elCurr = document.getElementById(`${prefix}-curr`);
             if (elCurr) elCurr.innerText = cidadeAtual;
 
-            return { cidadeInicio, cidadeAtual };
+            const elDist = document.getElementById(`${prefix}-dist`);
+            if (elDist) elDist.innerText = distanciaKm.toLocaleString() + " km";
+
+            return { cidadeInicio, cidadeAtual, distanciaKm };
         }
 
         async function desenharTrajeto(item, cidades = {}) {
@@ -229,6 +245,7 @@
                             <b>CIDADE ATUAL:</b> <span class="city-txt" id="pop-${keyId}-curr">Localizando...</span><br>
                             <b>PAÍS / REGIÃO:</b> ${item.country}<br>
                             <b>COORDENADAS:</b> ${item.latitude}, ${item.longitude}<br>
+                            <b>DISTÂNCIA PERCORRIDA:</b> <span style="color:#00ffaa; font-weight:bold;" id="pop-${keyId}-dist">Calculando...</span><br>
                             <b>FORMA/TIPO:</b> ${shapeCfg.name}<br>
                             <b>VELOCIDADE:</b> ${item.speed_kmh.toLocaleString()} km/h<br>
                             <b>ALTITUDE:</b> ${item.altitude_m.toLocaleString()} m<br>
@@ -257,6 +274,7 @@
                         <b>CIDADE ATUAL:</b> <span class="city-txt" id="card-${keyId}-curr">${item.country}</span><br>
                         <b>PAÍS / REGIÃO:</b> ${item.country}<br>
                         <b>COORDENADAS:</b> <span class="coord-txt">${item.latitude}, ${item.longitude}</span><br>
+                        <b>DISTÂNCIA PERCORRIDA:</b> <span style="color:#00ffaa; font-weight:bold;" id="card-${keyId}-dist">Calculando...</span><br>
                         <b>FORMA:</b> ${shapeCfg.name}<br>
                         <b>VELOCIDADE:</b> ${item.speed_kmh.toLocaleString()} km/h<br>
                         <b>ALTITUDE:</b> ${item.altitude_m.toLocaleString()} m<br>
