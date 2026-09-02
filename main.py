@@ -108,7 +108,7 @@ async def get_real_ufo_data():
         rnd = random.Random(int(time.time() // 300))
         formatos_uap = ["Tic-Tac", "Disco Voador", "Esfera Luminosa", "Triângulo Anômalo", "Charuto / Cilindro", "Orb Multicor"]
         
-        for i in range(1, 120):
+        for i in range(1, 321):
             uap_lat = round(rnd.uniform(-55.0, 65.0), 4)
             uap_lon = round(rnd.uniform(-130.0, 140.0), 4)
             uap_speed = rnd.randint(1200, 18500)
