@@ -114,7 +114,7 @@
         });
 
         function getShapeConfig(shape, isNasa) {
-            if (isNasa) return { css: 'shape-nasa', name: 'Artefato / Meteoro', iconSymbol: '☄️' };
+            if (isNasa || (shape || '').includes('Asteroide')) return { css: 'shape-nasa', name: 'Asteroide / Corpo Espacial (NASA)', iconSymbol: '☄️' };
             
             const s = (shape || '').toLowerCase();
             if (s.includes('triângulo') || s.includes('triangulo')) return { css: 'shape-triangle', name: 'Triângulo Anômalo', iconSymbol: '▲' };

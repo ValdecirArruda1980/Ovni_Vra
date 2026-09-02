@@ -93,7 +93,7 @@ async def get_real_ufo_data():
                         ufo_events.append({
                             "id": f"NEO-{obj['id']}",
                             "source": "NASA Space Tracker",
-                            "shape": "Artefato / Corpo Espacial",
+                            "shape": "Asteroide / Corpo Espacial NEO",
                             "latitude": lat,
                             "longitude": lon,
                             "altitude_m": int(float(obj['close_approach_data'][0]['miss_distance']['kilometers'])),
