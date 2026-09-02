@@ -1,4 +1,6 @@
-<!DOCTYPE html>
+import os
+
+index_html = """<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -234,3 +236,9 @@
     </script>
 </body>
 </html>
+"""
+
+with open("static/index.html", "w", encoding="utf-8") as f:
+    f.write(index_html)
+
+print("✅ Ícones customizados gerados para cada tipo de objeto!")
