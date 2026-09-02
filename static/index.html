@@ -265,6 +265,10 @@
 
                     const card = document.createElement('div');
                     card.className = `ufo-card ${isNasa ? 'warning' : ''}`;
+                    // Calcula a distância diretamente pelas coordenadas do trajeto
+                    const startPt = item.trajectory && item.trajectory.length > 0 ? item.trajectory[0] : [item.latitude, item.longitude];
+                    const distCalc = calcularDistanciaKm(startPt[0], startPt[1], item.latitude, item.longitude);
+
                     card.innerHTML = `
                         <div class="ufo-title">
                             <span>${shapeCfg.iconSymbol} ${item.id}</span>
@@ -274,7 +278,7 @@
                         <b>CIDADE ATUAL:</b> <span class="city-txt" id="card-${keyId}-curr">${item.country}</span><br>
                         <b>PAÍS / REGIÃO:</b> ${item.country}<br>
                         <b>COORDENADAS:</b> <span class="coord-txt">${item.latitude}, ${item.longitude}</span><br>
-                        <b>DISTÂNCIA PERCORRIDA:</b> <span style="color:#00ffaa; font-weight:bold;" id="card-${keyId}-dist">Calculando...</span><br>
+                        <b>DISTÂNCIA PERCORRIDA:</b> <span style="color:#00ffaa; font-weight:bold;">${distCalc.toLocaleString()} km</span><br>
                         <b>FORMA:</b> ${shapeCfg.name}<br>
                         <b>VELOCIDADE:</b> ${item.speed_kmh.toLocaleString()} km/h<br>
                         <b>ALTITUDE:</b> ${item.altitude_m.toLocaleString()} m<br>
