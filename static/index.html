@@ -213,8 +213,8 @@
 
                     if (item.latitude && item.longitude) {
                         const customDivIcon = L.divIcon({
-                            className: 'custom-shape-icon',
-                            html: `<div class="${iconData.cssClass}"></div>`,
+                            className: 'custom-ufo-icon',
+                            html: `<span style="font-size: 16px; filter: drop-shadow(0 0 6px ${iconData.color});">${iconData.emoji}</span>`,
                             iconSize: [24, 24],
                             iconAnchor: [12, 12]
                         });
