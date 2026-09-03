@@ -1,11 +1,13 @@
 import math
+import asyncio
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from whatsapp_engine import enviar_alerta_whatsapp_api
 
 DADOS_PADRAO_USUARIO = {
     'usuario_id': 'valdecir_piracicaba',
-    'telefone': '+5519993718849',
+    'telefone': '5519993718849',
     'email': 'valdecirrogerio@gmail.com'
 }
 
@@ -21,12 +23,6 @@ def calcular_distancia_km(lat1: float, lon1: float, lat2: float, lon2: float) ->
     a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
-
-def enviar_sms(numero_destino: str, texto: str):
-    print(f'[SMS SIMULADO] Enviando para {numero_destino}: {texto}')
-
-def enviar_whatsapp(numero_destino: str, texto: str):
-    print(f'[WHATSAPP SIMULADO] Enviando para whatsapp:{numero_destino}: {texto}')
 
 def enviar_email(destino: str, assunto: str, corpo: str):
     try:
@@ -53,16 +49,31 @@ def verificar_e_notificar_proximidade(ovni_lat: float, ovni_lng: float, usuario=
                 self.telefone = DADOS_PADRAO_USUARIO['telefone']
                 self.email = DADOS_PADRAO_USUARIO['email']
         usuario = UserMock()
+    
     u_lat = getattr(usuario, 'lat', None) or (usuario.get('lat', -22.7253) if isinstance(usuario, dict) else -22.7253)
     u_lng = getattr(usuario, 'lng', None) or (usuario.get('lng', -47.6492) if isinstance(usuario, dict) else -47.6492)
     u_tel = getattr(usuario, 'telefone', None) or (usuario.get('telefone', DADOS_PADRAO_USUARIO['telefone']) if isinstance(usuario, dict) else DADOS_PADRAO_USUARIO['telefone'])
     u_email = getattr(usuario, 'email', None) or (usuario.get('email', DADOS_PADRAO_USUARIO['email']) if isinstance(usuario, dict) else DADOS_PADRAO_USUARIO['email'])
+    
     distancia = calcular_distancia_km(u_lat, u_lng, ovni_lat, ovni_lng)
     RAIO_ALERTA_KM = 50.0
+    
     if distancia <= RAIO_ALERTA_KM:
         mensagem = f'ALERTA OVNIVRA! Objeto detectado a {distancia:.1f}km de Piracicaba!'
-        enviar_sms(u_tel, mensagem)
-        enviar_whatsapp(u_tel, mensagem)
+        
+        # Disparo real do E-mail
         enviar_email(u_email, 'Alerta de OVNI Proximo - OvniVra', mensagem)
+        
+        # Disparo real do WhatsApp via API oficial da Meta (executando de forma síncrona/assíncrona segura)
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                asyncio.create_task(enviar_alerta_whatsapp_api(u_tel, mensagem))
+            else:
+                asyncio.run(enviar_alerta_whatsapp_api(u_tel, mensagem))
+        except Exception as e:
+            print(f'[ERRO WHATSAPP] Falha ao acionar API do WhatsApp: {e}')
+            
         return {'status': 'alerta_disparado', 'distancia_km': round(distancia, 2)}
+        
     return {'status': 'fora_do_raio', 'distancia_km': round(distancia, 2)}
