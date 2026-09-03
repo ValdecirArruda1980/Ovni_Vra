@@ -1,20 +1,12 @@
 import math
-import asyncio
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from whatsapp_engine import enviar_alerta_whatsapp_api
+import os
+import requests
 
 DADOS_PADRAO_USUARIO = {
     'usuario_id': 'valdecir_piracicaba',
     'telefone': '5519993718849',
     'email': 'valdecirrogerio@gmail.com'
 }
-
-SMTP_SERVER = 'smtp.gmail.com'
-SMTP_PORT = 587
-EMAIL_REMETENTE = 'valdecirrogerio@gmail.com'
-SENHA_EMAIL = 'fjwhraokjauetght'
 
 def calcular_distancia_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     R = 6371.0
@@ -24,21 +16,30 @@ def calcular_distancia_km(lat1: float, lon1: float, lat2: float, lon2: float) ->
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
 
-def enviar_email(destino: str, assunto: str, corpo: str):
+def enviar_whatsapp_real(numero_destino: str, texto: str):
+    """Envia mensagem real via Meta Cloud API usando requisição HTTP"""
+    token = os.getenv("WHATSAPP_TOKEN", "EAAX...") # Insira seu token real ou use variável de ambiente
+    phone_id = os.getenv("WHATSAPP_PHONE_ID", "1372681535918103")
+    url = f"https://graph.facebook.com/v17.0/{phone_id}/messages"
+    
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": numero_destino,
+        "type": "text",
+        "text": {"body": texto}
+    }
     try:
-        msg = MIMEMultipart()
-        msg['From'] = EMAIL_REMETENTE
-        msg['To'] = destino
-        msg['Subject'] = assunto
-        msg.attach(MIMEText(corpo, 'plain'))
-        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-        server.starttls()
-        server.login(EMAIL_REMETENTE, SENHA_EMAIL)
-        server.sendmail(EMAIL_REMETENTE, destino, msg.as_string())
-        server.quit()
-        print(f'[EMAIL REAL ENVIADO] E-mail enviado com sucesso para {destino}!')
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
+        if response.status_code == 200:
+            print(f"[WHATSAPP REAL ENVIADO] Mensagem entregue para {numero_destino}!")
+        else:
+            print(f"[ERRO META API] Falha: {response.text}")
     except Exception as e:
-        print(f'[ERRO SMTP] Falha ao enviar e-mail real: {e}')
+        print(f"[ERRO WHATSAPP] Exceção ao conectar com a Meta: {e}")
 
 def verificar_e_notificar_proximidade(ovni_lat: float, ovni_lng: float, usuario=None):
     if usuario is None:
@@ -53,7 +54,6 @@ def verificar_e_notificar_proximidade(ovni_lat: float, ovni_lng: float, usuario=
     u_lat = getattr(usuario, 'lat', None) or (usuario.get('lat', -22.7253) if isinstance(usuario, dict) else -22.7253)
     u_lng = getattr(usuario, 'lng', None) or (usuario.get('lng', -47.6492) if isinstance(usuario, dict) else -47.6492)
     u_tel = getattr(usuario, 'telefone', None) or (usuario.get('telefone', DADOS_PADRAO_USUARIO['telefone']) if isinstance(usuario, dict) else DADOS_PADRAO_USUARIO['telefone'])
-    u_email = getattr(usuario, 'email', None) or (usuario.get('email', DADOS_PADRAO_USUARIO['email']) if isinstance(usuario, dict) else DADOS_PADRAO_USUARIO['email'])
     
     distancia = calcular_distancia_km(u_lat, u_lng, ovni_lat, ovni_lng)
     RAIO_ALERTA_KM = 50.0
@@ -61,19 +61,9 @@ def verificar_e_notificar_proximidade(ovni_lat: float, ovni_lng: float, usuario=
     if distancia <= RAIO_ALERTA_KM:
         mensagem = f'ALERTA OVNIVRA! Objeto detectado a {distancia:.1f}km de Piracicaba!'
         
-        # Disparo real do E-mail
-        enviar_email(u_email, 'Alerta de OVNI Proximo - OvniVra', mensagem)
+        # Disparo real do WhatsApp via HTTP (passa livremente no Render)
+        enviar_whatsapp_real(u_tel, mensagem)
         
-        # Disparo real do WhatsApp via API oficial da Meta (executando de forma síncrona/assíncrona segura)
-        try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                asyncio.create_task(enviar_alerta_whatsapp_api(u_tel, mensagem))
-            else:
-                asyncio.run(enviar_alerta_whatsapp_api(u_tel, mensagem))
-        except Exception as e:
-            print(f'[ERRO WHATSAPP] Falha ao acionar API do WhatsApp: {e}')
-            
         return {'status': 'alerta_disparado', 'distancia_km': round(distancia, 2)}
         
     return {'status': 'fora_do_raio', 'distancia_km': round(distancia, 2)}
