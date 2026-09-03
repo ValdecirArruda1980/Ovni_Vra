@@ -104,3 +104,11 @@ async def get_real_ufo_data():
         "total_anomalies_tracked": len(ufo_events),
         "data": ufo_events
     }
+
+# --- Adicionado para o Radar de Satélites do OvniVra ---
+from satellites_api import router as satellites_router
+app.include_router(satellites_router)
+
+# --- Adicionado para o Sistema de Alertas e Proximidade do OvniVra ---
+from alertas_api import router as alertas_router
+app.include_router(alertas_router)
