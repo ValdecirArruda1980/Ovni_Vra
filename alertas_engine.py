@@ -18,8 +18,13 @@ def calcular_distancia_km(lat1: float, lon1: float, lat2: float, lon2: float) ->
 
 def enviar_whatsapp_real(numero_destino: str, texto: str):
     """Envia mensagem real via Meta Cloud API usando requisição HTTP"""
-    token = os.getenv("WHATSAPP_TOKEN", "EAAX...") # Insira seu token real ou use variável de ambiente
+    token = os.getenv("WHATSAPP_TOKEN")
     phone_id = os.getenv("WHATSAPP_PHONE_ID", "1372681535918103")
+    
+    if not token:
+        print("[ERRO WHATSAPP] Variável WHATSAPP_TOKEN não encontrada no ambiente do Render!")
+        return
+        
     url = f"https://graph.facebook.com/v17.0/{phone_id}/messages"
     
     headers = {
@@ -37,7 +42,7 @@ def enviar_whatsapp_real(numero_destino: str, texto: str):
         if response.status_code == 200:
             print(f"[WHATSAPP REAL ENVIADO] Mensagem entregue para {numero_destino}!")
         else:
-            print(f"[ERRO META API] Falha: {response.text}")
+            print(f"[ERRO META API] Falha status {response.status_code}: {response.text}")
     except Exception as e:
         print(f"[ERRO WHATSAPP] Exceção ao conectar com a Meta: {e}")
 
@@ -61,7 +66,7 @@ def verificar_e_notificar_proximidade(ovni_lat: float, ovni_lng: float, usuario=
     if distancia <= RAIO_ALERTA_KM:
         mensagem = f'ALERTA OVNIVRA! Objeto detectado a {distancia:.1f}km de Piracicaba!'
         
-        # Disparo real do WhatsApp via HTTP (passa livremente no Render)
+        # Disparo real do WhatsApp via HTTP
         enviar_whatsapp_real(u_tel, mensagem)
         
         return {'status': 'alerta_disparado', 'distancia_km': round(distancia, 2)}
